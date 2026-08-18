@@ -1,28 +1,23 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import bodyParser from "body-parser";
 import express from "express";
 import cors from "cors";
 
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
-
-
+app.use(cors());
 app.options("*", cors());
 
 app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-const eventsPath = path.join(process.cwd(), "data", "events.json");
-const imagesPath = path.join(process.cwd(), "data", "images.json");
+const eventsPath = path.join(__dirname, "data", "events.json");
+const imagesPath = path.join(__dirname, "data", "images.json");
 
 app.get("/events", async (req, res) => {
   const { max, search } = req.query;
@@ -51,6 +46,7 @@ app.get("/events", async (req, res) => {
       })),
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to read events data" });
   }
 });
@@ -140,4 +136,6 @@ app.delete("/events/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`Server running on port ${PORT}`),
+);
