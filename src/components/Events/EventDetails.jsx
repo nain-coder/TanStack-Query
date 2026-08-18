@@ -126,7 +126,7 @@ export default function EventDetails() {
             </header>
             <div id="event-details-content">
               <img
-                src={`http://localhost:3000/${data.image}`}
+                src={`https://tanstack-query-production.up.railway.app/${data.image}`}
                 alt={data.title}
               />
               <div id="event-details-info">
