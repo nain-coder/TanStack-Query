@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-
+import path from 'node:path';
 import bodyParser from 'body-parser';
 import express from 'express';
 
@@ -16,14 +16,17 @@ app.use((req, res, next) => {
   );
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-Requested-With,content-type'
+    'X-Requested-With, content-type, Authorization'
   );
   next();
 });
 
+const eventsPath = path.resolve('data/events.json');
+const imagesPath = path.resolve('data/images.json');
+
 app.get('/events', async (req, res) => {
   const { max, search } = req.query;
-  const eventsFileContent = await fs.readFile('./data/events.json');
+  const eventsFileContent = await fs.readFile(eventsPath);
   let events = JSON.parse(eventsFileContent);
 
   if (search) {
@@ -49,7 +52,7 @@ app.get('/events', async (req, res) => {
 });
 
 app.get('/events/images', async (req, res) => {
-  const imagesFileContent = await fs.readFile('./data/images.json');
+  const imagesFileContent = await fs.readFile(imagesPath);
   const images = JSON.parse(imagesFileContent);
 
   res.json({ images });
@@ -58,7 +61,7 @@ app.get('/events/images', async (req, res) => {
 app.get('/events/:id', async (req, res) => {
   const { id } = req.params;
 
-  const eventsFileContent = await fs.readFile('./data/events.json');
+  const eventsFileContent = await fs.readFile(eventsPath);
   const events = JSON.parse(eventsFileContent);
 
   const event = events.find((event) => event.id === id);
@@ -69,9 +72,7 @@ app.get('/events/:id', async (req, res) => {
       .json({ message: `For the id ${id}, no event could be found.` });
   }
 
-  setTimeout(() => {
-    res.json({ event });
-  }, 1000);
+  res.json({ event });
 });
 
 app.post('/events', async (req, res) => {
@@ -80,8 +81,6 @@ app.post('/events', async (req, res) => {
   if (!event) {
     return res.status(400).json({ message: 'Event is required' });
   }
-
-  console.log(event);
 
   if (
     !event.title?.trim() ||
@@ -94,7 +93,7 @@ app.post('/events', async (req, res) => {
     return res.status(400).json({ message: 'Invalid data provided.' });
   }
 
-  const eventsFileContent = await fs.readFile('./data/events.json');
+  const eventsFileContent = await fs.readFile(eventsPath);
   const events = JSON.parse(eventsFileContent);
 
   const newEvent = {
@@ -104,7 +103,7 @@ app.post('/events', async (req, res) => {
 
   events.push(newEvent);
 
-  await fs.writeFile('./data/events.json', JSON.stringify(events));
+  await fs.writeFile(eventsPath, JSON.stringify(events));
 
   res.json({ event: newEvent });
 });
@@ -128,7 +127,7 @@ app.put('/events/:id', async (req, res) => {
     return res.status(400).json({ message: 'Invalid data provided.' });
   }
 
-  const eventsFileContent = await fs.readFile('./data/events.json');
+  const eventsFileContent = await fs.readFile(eventsPath);
   const events = JSON.parse(eventsFileContent);
 
   const eventIndex = events.findIndex((event) => event.id === id);
@@ -142,17 +141,15 @@ app.put('/events/:id', async (req, res) => {
     ...event,
   };
 
-  await fs.writeFile('./data/events.json', JSON.stringify(events));
+  await fs.writeFile(eventsPath, JSON.stringify(events));
 
-  setTimeout(() => {
-    res.json({ event: events[eventIndex] });
-  }, 1000);
+  res.json({ event: events[eventIndex] });
 });
 
 app.delete('/events/:id', async (req, res) => {
   const { id } = req.params;
 
-  const eventsFileContent = await fs.readFile('./data/events.json');
+  const eventsFileContent = await fs.readFile(eventsPath);
   const events = JSON.parse(eventsFileContent);
 
   const eventIndex = events.findIndex((event) => event.id === id);
@@ -163,13 +160,13 @@ app.delete('/events/:id', async (req, res) => {
 
   events.splice(eventIndex, 1);
 
-  await fs.writeFile('./data/events.json', JSON.stringify(events));
+  await fs.writeFile(eventsPath, JSON.stringify(events));
 
-  setTimeout(() => {
-    res.json({ message: 'Event deleted' });
-  }, 1000);
+  res.json({ message: 'Event deleted' });
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
